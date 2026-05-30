@@ -1,0 +1,38 @@
+{
+  "thresholds": {
+    "gas": 200,
+    "temp_hot": 35,
+    "temp_ok": 32,
+    "temp_alert": 38,
+    "hum": 90
+  },
+  "automation": {
+    "pir_light": true,
+    "temp_fan": true,
+    "gas_safety": true,
+    "flame_safety": true
+  },
+  "pir_timeout": 60000,
+  "rfid_whitelist": [
+    {
+      "uid": "A1B2C3D4",
+      "name": "Thẻ admin",
+      "owner": "admin"
+    },
+    {
+      "uid": "9C45105",
+      "name": "Thẻ cửa ra vào",
+      "owner": "Tuấn",
+      "addedAt": "2026-04-25T10:03:33.293Z"
+    }
+  ],
+  "telegram": {
+    "token": "YOUR_TELEGRAM_BOT_TOKEN",
+    "chat_id": "YOUR_TELEGRAM_CHAT_ID"
+  },
+  "mqtt": {
+    "host": "192.168.*.*",
+    "port": 9001
+  },
+  "schedule": []
+}

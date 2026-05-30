@@ -1,0 +1,38 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Database / runtime data
+*.db
+*.sqlite
+database.db
+database.sqlite
+data/*.db
+data/*.sqlite
+
+# Secrets / configuration
+.env
+*.env
+data/settings.json
+**/secrets.h
+**/wifi_config.h
+data/users.json
+
+# Logs
+logs/
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Arduino / PlatformIO build files
+*.bin
+*.elf
+*.hex
+*.map
+.pio/
+*.bak

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+</head>
+<body>
+
+<h1>Trang Admin </h1>
+
+<script>
+// check admin
+const role = localStorage.getItem("role");
+
+if (role !== "admin") {
+    window.location.href = "/dashboard/index.html";
+}
+</script>
+
+</body>
+</html>

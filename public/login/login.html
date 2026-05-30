@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHome — Đăng nhập</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<!-- SLIDESHOW NỀN -->
+<div class="bg-slideshow">
+    <div class="bg-slide active" style="background-image:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=80')"></div>
+    <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1400&q=80')"></div>
+    <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1400&q=80')"></div>
+    <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1400&q=80')"></div>
+    <div class="bg-overlay"></div>
+</div>
+
+<!-- FORM WRAPPER -->
+<div class="auth-wrapper">
+
+    <!-- LOGIN FORM -->
+    <form class="auth-form" id="login-form">
+        <!-- HEADER -->
+        <div class="auth-header">
+
+            <div class="auth-logo-icon">
+                <i class="bi bi-house-door-fill"></i>
+            </div>
+
+            <div class="auth-logo-text">
+                <span class="auth-logo-name">SmartHome</span>
+                <span class="auth-logo-sub">
+                    IoT Dashboard System
+                </span>
+            </div>
+
+        </div>
+        <h2 class="form-title">Đăng nhập</h2>
+        <p class="form-sub">Chào mừng trở lại! Vui lòng đăng nhập.</p>
+
+        <div class="input-group">
+            <i class="bi bi-person"></i>
+            <input type="text" id="username-login" placeholder="Tên đăng nhập" required>
+        </div>
+
+        <div class="input-group">
+            <i class="bi bi-lock"></i>
+            <input type="password" id="password-login" placeholder="Mật khẩu" required>
+            <button type="button" class="eye-btn" onclick="togglePassword('password-login', this)">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+
+        <!-- Đếm số lần sai -->
+        <div class="login-attempts" id="login-attempts" style="display:none;">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span id="attempts-text"></span>
+        </div>
+
+        <div class="remember-forgot-box">
+            <label>
+                <input type="checkbox" id="remember-me">
+                Ghi nhớ đăng nhập
+            </label>
+        </div>
+
+        <button type="submit" class="auth-btn" id="login-btn">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Đăng nhập
+        </button>
+
+        <p class="auth-switch">
+            Chưa có tài khoản?
+            <a href="#" id="show-register-form-link">Đăng ký</a>
+        </p>
+
+        <p id="login-status-message" class="status-message"></p>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form class="auth-form hidden" id="register-form">
+        <!-- HEADER -->
+        <div class="auth-header">
+
+            <div class="auth-logo-icon">
+                <i class="bi bi-house-door-fill"></i>
+            </div>
+
+            <div class="auth-logo-text">
+                <span class="auth-logo-name">SmartHome</span>
+                <span class="auth-logo-sub">
+                    Create New Account
+                </span>
+            </div>
+
+        </div>
+        <h2 class="form-title">Đăng ký</h2>
+        <p class="form-sub">Tạo tài khoản mới để sử dụng hệ thống.</p>
+
+        <div class="input-group">
+            <i class="bi bi-person"></i>
+            <input type="text" id="username-register" placeholder="Tên đăng nhập" required>
+        </div>
+
+        <div class="input-group">
+            <i class="bi bi-lock"></i>
+            <input type="password" id="password-register" placeholder="Mật khẩu" required>
+            <button type="button" class="eye-btn" onclick="togglePassword('password-register', this)">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+
+        <div class="input-group">
+            <i class="bi bi-lock-fill"></i>
+            <input type="password" id="confirm-password-register" placeholder="Xác nhận mật khẩu" required>
+            <button type="button" class="eye-btn" onclick="togglePassword('confirm-password-register', this)">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+
+        <!-- Password strength -->
+        <div class="password-strength" id="pw-strength" style="display:none;">
+            <div class="strength-bar">
+                <div class="strength-fill" id="strength-fill"></div>
+            </div>
+            <span class="strength-label" id="strength-label">Độ mạnh mật khẩu</span>
+        </div>
+
+        <button type="submit" class="auth-btn">
+            <i class="bi bi-person-plus"></i>
+            Đăng ký
+        </button>
+
+        <p class="auth-switch">
+            Đã có tài khoản?
+            <a href="#" id="show-login-form-link">Đăng nhập</a>
+        </p>
+
+        <p id="register-status-message" class="status-message"></p>
+    </form>
+
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>
