@@ -6,6 +6,12 @@
 ![Node.js](https://img.shields.io/badge/Backend-Node.js-brightgreen)
 ![Database](https://img.shields.io/badge/Database-SQLite-lightgrey)
 
+## Giao diện hệ thống
+
+![Giao diện Web Dashboard](assets/images/ch3-dashboard-overview.jpg)
+
+Hình trên là giao diện Web Dashboard của hệ thống nhà thông minh, cho phép người dùng giám sát dữ liệu cảm biến, trạng thái kết nối, cảnh báo và điều khiển thiết bị trong thời gian thực.
+
 ## Giới thiệu
 
 Đây là dự án xây dựng hệ thống điều khiển và giám sát nhà thông minh dựa trên mô hình **Publish-Subscribe**, sử dụng **Raspberry Pi**, **ESP32/ESP8266**, **MQTT**, **Node.js**, **SQLite** và **Telegram Bot**.
