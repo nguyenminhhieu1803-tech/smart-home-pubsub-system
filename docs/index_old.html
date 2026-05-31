@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Home IoT Dashboard Demo</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    header {
+      background: #0f172a;
+      color: white;
+      padding: 24px 32px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 0;
+      color: #cbd5e1;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 24px 32px;
+    }
+
+    h2 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .value {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .muted {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin: 6px 6px 0 0;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+    }
+
+    button.off {
+      background: #64748b;
+    }
+
+    button.danger {
+      background: #dc2626;
+    }
+
+    .ok {
+      border-left: 6px solid #22c55e;
+    }
+
+    .alert {
+      border-left: 6px solid #ef4444;
+    }
+
+    .status {
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Smart Home IoT Dashboard Demo</h1>
+    <p>Mô phỏng giao diện hệ thống nhà thông minh sử dụng Raspberry Pi, ESP32/ESP8266, MQTT, Node.js, SQLite và Telegram Bot.</p>
+  </header>
+
+  <main>
+    <h2>Dữ liệu cảm biến thời gian thực</h2>
+
+    <section class="grid">
+      <div class="card">
+        <div class="muted">Nhiệt độ phòng khách</div>
+        <div class="value" id="temp">28.4 °C</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Độ ẩm phòng khách</div>
+        <div class="value" id="hum">65 %</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Cường độ ánh sáng</div>
+        <div class="value" id="light">420 lux</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Giá trị cảm biến gas</div>
+        <div class="value" id="gas">310</div>
+      </div>
+    </section>
+
+    <h2>Điều khiển thiết bị</h2>
+
+    <section class="grid">
+      <div class="card">
+        <h3>Đèn phòng khách</h3>
+        <p id="relay1" class="status">Trạng thái: OFF</p>
+        <button onclick="toggleRelay('relay1')">Bật / Tắt đèn</button>
+      </div>
+
+      <div class="card">
+        <h3>Quạt phòng khách</h3>
+        <p id="relay2" class="status">Trạng thái: OFF</p>
+        <button onclick="toggleRelay('relay2')">Bật / Tắt quạt</button>
+      </div>
+
+      <div class="card">
+        <h3>Đèn RGB</h3>
+        <p id="rgb" class="status">Màu: OFF</p>
+        <button onclick="setRgb('ĐỎ')">Đỏ</button>
+        <button onclick="setRgb('XANH LÁ')">Xanh lá</button>
+        <button onclick="setRgb('XANH DƯƠNG')">Xanh dương</button>
+        <button class="off" onclick="setRgb('OFF')">Tắt</button>
+      </div>
+    </section>
+
+    <h2>Giám sát cửa và cảnh báo</h2>
+
+    <section class="grid">
+      <div class="card ok" id="doorCard">
+        <h3>Trạng thái cửa</h3>
+        <p id="door" class="status">CỬA ĐÓNG</p>
+        <button onclick="toggleDoor()">Đổi trạng thái cửa</button>
+      </div>
+
+      <div class="card ok" id="alarmCard">
+        <h3>Cảnh báo bếp</h3>
+        <p id="alarm" class="status">Bình thường</p>
+        <button class="danger" onclick="triggerAlarm()">Giả lập cảnh báo</button>
+        <button class="off" onclick="clearAlarm()">Xóa cảnh báo</button>
+      </div>
+
+      <div class="card">
+        <h3>RFID cửa</h3>
+        <p id="rfid" class="status">UID: Chưa có dữ liệu</p>
+        <button onclick="scanValidCard()">Quét thẻ hợp lệ</button>
+        <button class="danger" onclick="scanInvalidCard()">Quét thẻ sai</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Smart Home IoT System | Raspberry Pi | ESP32/ESP8266 | MQTT | Node.js | SQLite
+  </footer>
+
+  <script>
+    const states = {
+      relay1: false,
+      relay2: false,
+      door: false
+    };
+
+    function toggleRelay(id) {
+      states[id] = !states[id];
+      document.getElementById(id).textContent =
+        "Trạng thái: " + (states[id] ? "ON" : "OFF");
+    }
+
+    function setRgb(color) {
+      document.getElementById("rgb").textContent = "Màu: " + color;
+    }
+
+    function toggleDoor() {
+      states.door = !states.door;
+
+      document.getElementById("door").textContent =
+        states.door ? "CỬA MỞ" : "CỬA ĐÓNG";
+
+      document.getElementById("doorCard").className =
+        states.door ? "card alert" : "card ok";
+    }
+
+    function triggerAlarm() {
+      document.getElementById("alarm").textContent = "Cảnh báo gas/lửa";
+      document.getElementById("alarmCard").className = "card alert";
+      document.getElementById("gas").textContent = "820";
+    }
+
+    function clearAlarm() {
+      document.getElementById("alarm").textContent = "Bình thường";
+      document.getElementById("alarmCard").className = "card ok";
+      document.getElementById("gas").textContent = "310";
+    }
+
+    function scanValidCard() {
+      document.getElementById("rfid").textContent = "UID: A3 B5 7C 91 - Hợp lệ";
+    }
+
+    function scanInvalidCard() {
+      document.getElementById("rfid").textContent = "UID: FF 12 9A 00 - Không hợp lệ";
+    }
+
+    setInterval(() => {
+      document.getElementById("temp").textContent =
+        (27 + Math.random() * 3).toFixed(1) + " °C";
+
+      document.getElementById("hum").textContent =
+        Math.round(58 + Math.random() * 15) + " %";
+
+      document.getElementById("light").textContent =
+        Math.round(300 + Math.random() * 250) + " lux";
+    }, 2000);
+  </script>
+</body>
+</html>

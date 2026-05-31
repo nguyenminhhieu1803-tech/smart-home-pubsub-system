@@ -1,258 +1,1287 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Home IoT Dashboard Demo</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f7fb;
-      color: #1f2937;
-    }
-
-    header {
-      background: #0f172a;
-      color: white;
-      padding: 24px 32px;
-    }
-
-    header h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-    }
-
-    header p {
-      margin: 0;
-      color: #cbd5e1;
-    }
-
-    main {
-      max-width: 1100px;
-      margin: auto;
-      padding: 24px 32px;
-    }
-
-    h2 {
-      margin-top: 32px;
-      margin-bottom: 16px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 18px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-    }
-
-    .card h3 {
-      margin-top: 0;
-    }
-
-    .value {
-      font-size: 32px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-
-    .muted {
-      color: #64748b;
-      font-size: 14px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 14px;
-      margin: 6px 6px 0 0;
-      cursor: pointer;
-      background: #2563eb;
-      color: white;
-      font-weight: 600;
-    }
-
-    button.off {
-      background: #64748b;
-    }
-
-    button.danger {
-      background: #dc2626;
-    }
-
-    .ok {
-      border-left: 6px solid #22c55e;
-    }
-
-    .alert {
-      border-left: 6px solid #ef4444;
-    }
-
-    .status {
-      font-weight: bold;
-    }
-
-    footer {
-      text-align: center;
-      padding: 24px;
-      color: #64748b;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <!-- PWA -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SmartHome">
+    <meta name="theme-color" content="#161b22">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/images/icon-192.png">
+    <title>SmartHome Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/mqtt.min.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        /* Alarm indicator */
+        .alarm-indicator {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: var(--bg-surface, #f1f5f9);
+            color: var(--text-muted, #6b7280);
+            border: 1px solid var(--border, #e5e7eb);
+        }
+        .alarm-indicator.active {
+            background: #dc2626;
+            color: #fff;
+            border-color: #dc2626;
+            animation: pulse-alarm 1s infinite;
+        }
+        @keyframes pulse-alarm {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.6; }
+        }
+        /* RGB buttons */
+        .rgb-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform .15s, border-color .15s;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .rgb-btn:hover {
+            transform: scale(1.15);
+            border-color: var(--text-main, #111);
+        }
+    </style>
 </head>
-
 <body>
-  <header>
-    <h1>Smart Home IoT Dashboard Demo</h1>
-    <p>Mô phỏng giao diện hệ thống nhà thông minh sử dụng Raspberry Pi, ESP32/ESP8266, MQTT, Node.js, SQLite và Telegram Bot.</p>
-  </header>
 
-  <main>
-    <h2>Dữ liệu cảm biến thời gian thực</h2>
+<div class="d-flex">
 
-    <section class="grid">
-      <div class="card">
-        <div class="muted">Nhiệt độ phòng khách</div>
-        <div class="value" id="temp">28.4 °C</div>
-      </div>
+    <!-- ===== SIDEBAR ===== -->
+    <div id="sidebar" class="sidebar">
 
-      <div class="card">
-        <div class="muted">Độ ẩm phòng khách</div>
-        <div class="value" id="hum">65 %</div>
-      </div>
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">
+                <i class="bi bi-house-door-fill" style="font-size:18px;color:#fff;"></i>
+            </div>
+            <div class="sidebar-brand-text">
+                <span class="sidebar-brand-name">SmartHome</span>
+            </div>
+        </div>
 
-      <div class="card">
-        <div class="muted">Cường độ ánh sáng</div>
-        <div class="value" id="light">420 lux</div>
-      </div>
+        <nav class="sidebar-nav">
 
-      <div class="card">
-        <div class="muted">Giá trị cảm biến gas</div>
-        <div class="value" id="gas">310</div>
-      </div>
-    </section>
+            <div class="sidebar-section-label">MENU</div>
 
-    <h2>Điều khiển thiết bị</h2>
+            <a class="nav-link active" onclick="showPage('dashboard', this)">
+                <i class="bi bi-speedometer2"></i>
+                <span>Home</span>
+            </a>
 
-    <section class="grid">
-      <div class="card">
-        <h3>Đèn phòng khách</h3>
-        <p id="relay1" class="status">Trạng thái: OFF</p>
-        <button onclick="toggleRelay('relay1')">Bật / Tắt đèn</button>
-      </div>
+            <a class="nav-link" onclick="showPage('devices', this)">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Devices</span>
+            </a>
 
-      <div class="card">
-        <h3>Quạt phòng khách</h3>
-        <p id="relay2" class="status">Trạng thái: OFF</p>
-        <button onclick="toggleRelay('relay2')">Bật / Tắt quạt</button>
-      </div>
+            <a class="nav-link" onclick="showPage('user', this)">
+                <i class="bi bi-person-circle"></i>
+                <span>User</span>
+            </a>
 
-      <div class="card">
-        <h3>Đèn RGB</h3>
-        <p id="rgb" class="status">Màu: OFF</p>
-        <button onclick="setRgb('ĐỎ')">Đỏ</button>
-        <button onclick="setRgb('XANH LÁ')">Xanh lá</button>
-        <button onclick="setRgb('XANH DƯƠNG')">Xanh dương</button>
-        <button class="off" onclick="setRgb('OFF')">Tắt</button>
-      </div>
-    </section>
+            <a class="nav-link" onclick="showPage('cameras', this)">
+                <i class="bi bi-camera-video"></i>
+                <span>Cameras</span>
+            </a>
 
-    <h2>Giám sát cửa và cảnh báo</h2>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">SYSTEM</div>
 
-    <section class="grid">
-      <div class="card ok" id="doorCard">
-        <h3>Trạng thái cửa</h3>
-        <p id="door" class="status">CỬA ĐÓNG</p>
-        <button onclick="toggleDoor()">Đổi trạng thái cửa</button>
-      </div>
+            <a class="nav-link" onclick="showPage('history', this)">
+                <i class="bi bi-clock-history"></i>
+                <span>History</span>
+            </a>
 
-      <div class="card ok" id="alarmCard">
-        <h3>Cảnh báo bếp</h3>
-        <p id="alarm" class="status">Bình thường</p>
-        <button class="danger" onclick="triggerAlarm()">Giả lập cảnh báo</button>
-        <button class="off" onclick="clearAlarm()">Xóa cảnh báo</button>
-      </div>
+            <a class="nav-link" onclick="showPage('notifications', this)">
+                <i class="bi bi-bell"></i>
+                <span>Notification</span>
+                <span class="nav-badge" id="notifBadge" style="display:none;">0</span>
+            </a>
 
-      <div class="card">
-        <h3>RFID cửa</h3>
-        <p id="rfid" class="status">UID: Chưa có dữ liệu</p>
-        <button onclick="scanValidCard()">Quét thẻ hợp lệ</button>
-        <button class="danger" onclick="scanInvalidCard()">Quét thẻ sai</button>
-      </div>
-    </section>
-  </main>
+            <a class="nav-link" onclick="showPage('settings', this)">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+            </a>
 
-  <footer>
-    Smart Home IoT System | Raspberry Pi | ESP32/ESP8266 | MQTT | Node.js | SQLite
-  </footer>
+        </nav>
 
-  <script>
-    const states = {
-      relay1: false,
-      relay2: false,
-      door: false
-    };
+        <div class="sidebar-footer">
+            <a class="nav-link nav-logout" id="logoutBtn2" style="width:100%;justify-content:flex-start;padding:0 16px;">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Log out</span>
+            </a>
+        </div>
 
-    function toggleRelay(id) {
-      states[id] = !states[id];
-      document.getElementById(id).textContent =
-        "Trạng thái: " + (states[id] ? "ON" : "OFF");
-    }
+    </div>
 
-    function setRgb(color) {
-      document.getElementById("rgb").textContent = "Màu: " + color;
-    }
+    <!-- ===== MAIN ===== -->
+    <div class="main-wrapper flex-grow-1">
 
-    function toggleDoor() {
-      states.door = !states.door;
+        <!-- NAVBAR -->
+        <nav class="top-navbar">
 
-      document.getElementById("door").textContent =
-        states.door ? "CỬA MỞ" : "CỬA ĐÓNG";
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Tìm kiếm thiết bị, phòng...">
+            </div>
 
-      document.getElementById("doorCard").className =
-        states.door ? "card alert" : "card ok";
-    }
+            <div class="navbar-right">
 
-    function triggerAlarm() {
-      document.getElementById("alarm").textContent = "Cảnh báo gas/lửa";
-      document.getElementById("alarmCard").className = "card alert";
-      document.getElementById("gas").textContent = "820";
-    }
+                <div class="navbar-clock">
+                    <div class="clock-time" id="clockTime">--:--</div>
+                    <div class="clock-date" id="clockDate">--</div>
+                </div>
 
-    function clearAlarm() {
-      document.getElementById("alarm").textContent = "Bình thường";
-      document.getElementById("alarmCard").className = "card ok";
-      document.getElementById("gas").textContent = "310";
-    }
+                <button class="icon-btn" title="MQTT Status">
+                    <i class="bi bi-wifi" id="mqttIcon"></i>
+                </button>
 
-    function scanValidCard() {
-      document.getElementById("rfid").textContent = "UID: A3 B5 7C 91 - Hợp lệ";
-    }
+                <button class="icon-btn position-relative" title="Thông báo"
+                    onclick="toggleNotifPanel(event)">
+                    <i class="bi bi-bell"></i>
+                    <span class="notif-dot" id="notiCount" style="display:none;">0</span>
+                </button>
 
-    function scanInvalidCard() {
-      document.getElementById("rfid").textContent = "UID: FF 12 9A 00 - Không hợp lệ";
-    }
+                <!-- Panel thông báo dropdown -->
+                <div id="notifPanel" class="notif-panel" style="display:none;">
+                    <div class="notif-panel-head">
+                        <span class="notif-panel-title">Thông báo</span>
+                        <button class="user-btn user-btn-ghost" style="padding:3px 8px;font-size:11px;"
+                            onclick="markAllRead()">
+                            <i class="bi bi-check2-all"></i> Đọc hết
+                        </button>
+                    </div>
+                    <div id="notif-panel-list"></div>
+                    <div class="notif-panel-footer" onclick="showPage('notifications', document.querySelector('.nav-link[onclick*=notifications]'));closeNotifPanel();">
+                        Xem tất cả thông báo →
+                    </div>
+                </div>
 
-    setInterval(() => {
-      document.getElementById("temp").textContent =
-        (27 + Math.random() * 3).toFixed(1) + " °C";
+                <button class="icon-btn" title="Toàn màn hình" onclick="toggleFullscreen()">
+                    <i class="bi bi-fullscreen" id="fullscreenIcon"></i>
+                </button>
 
-      document.getElementById("hum").textContent =
-        Math.round(58 + Math.random() * 15) + " %";
+                <button class="icon-btn" title="Dark mode" onclick="toggleDark()">
+                    <i class="bi bi-moon" id="darkIcon"></i>
+                </button>
 
-      document.getElementById("light").textContent =
-        Math.round(300 + Math.random() * 250) + " lux";
-    }, 2000);
-  </script>
+                <div class="user-chip">
+                    <img src="assets/images/avatar.jpg" class="user-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="user-avatar-fallback">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="username">Admin</span>
+                    </div>
+                </div>
+
+            </div>
+        </nav>
+
+        <!-- ===== PAGE: HOME / DASHBOARD ===== -->
+        <div id="page-dashboard" class="page-content">
+
+
+
+            <div class="content-area">
+
+                <!-- WELCOME BANNER -->
+                <div class="welcome-banner">
+                    <!-- BÊN PHẢI: Slideshow ảnh -->
+                    <div class="welcome-slideshow">
+                        <div class="welcome-slide active" style="background-image:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80')"></div>
+                        <div class="welcome-slide" style="background-image:url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80')"></div>
+                        <div class="welcome-slide" style="background-image:url('https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80')"></div>
+                        <div class="welcome-slide" style="background-image:url('https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&q=80')"></div>
+                        <!-- Overlay gradient -->
+                        <div class="welcome-slide-overlay"></div>
+                        <!-- Dots -->
+                        <div class="welcome-dots">
+                            <span class="wd active"></span>
+                            <span class="wd"></span>
+                            <span class="wd"></span>
+                            <span class="wd"></span>
+                        </div>
+                    </div>
+
+                    <!-- BÊN TRÁI: Nội dung -->
+                    <div class="welcome-left">
+                        <!-- Chữ bên trái -->
+                        <div class="welcome-text">
+                            <div class="welcome-name">
+                                <span class="welcome-greeting">Xin chào, </span>
+                                <span id="welcomeName">Admin 👋</span>
+                            </div>
+                            <div class="welcome-sub">
+                                Hệ thống đang hoạt động bình thường.<br>
+                                Kiểm soát ngôi nhà của bạn dễ dàng.
+                            </div>
+                        </div>
+                        <!-- Stat bên phải -->
+                        <div class="welcome-stats">
+                            <div class="welcome-stat-item">
+                                <i class="bi bi-thermometer-half"></i>
+                                <div>
+                                    <span id="welcomeTemp">-- °C</span>
+                                    <small>Nhiệt độ</small>
+                                </div>
+                            </div>
+                            <div class="welcome-stat-item">
+                                <i class="bi bi-droplet-half"></i>
+                                <div>
+                                    <span id="welcomeHum">-- %</span>
+                                    <small>Độ ẩm</small>
+                                </div>
+                            </div>
+                            <div class="welcome-stat-item">
+                                <i class="bi bi-lightning-charge"></i>
+                                <div>
+                                    <span id="welcomeDevices">0 / 2</span>
+                                    <small>Thiết bị bật</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN GRID: Chart + Settings -->
+                <div class="dash-3col">
+
+                    <!-- CỘT TRÁI: Điều khiển thiết bị -->
+                    <div class="dash-col">
+                        <!-- Card điều khiển relay1, relay2 -->
+                        <div class="card dash-card">
+                            <div class="dash-card-head">
+                                <span class="dash-card-title">
+                                    <i class="bi bi-lightning-charge"></i>
+                                    Điều khiển
+                                </span>
+                                <span class="dash-card-sub">Phòng khách</span>
+                            </div>
+                            <div class="device-grid-v2" id="device-list"></div>
+                        </div>
+                        <!-- Mini chart chuyển xuống đây -->
+                        <div class="card dash-card" style="margin-top:0;">
+                            <div class="dash-card-head">
+                                <span class="dash-card-title">
+                                    <i class="bi bi-activity"></i>
+                                    Nhiệt độ / Độ ẩm
+                                </span>
+                                <span class="realtime-badge">Realtime</span>
+                            </div>
+                            <div class="mini-chart-wrap">
+                                <canvas id="envChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT GIỮA: Cảm biến + Chart -->
+                    <div class="dash-col">
+                        <div class="card dash-card">
+                            <div class="dash-card-head">
+                                <span class="dash-card-title">
+                                    <i class="bi bi-activity"></i>
+                                    Cảm biến
+                                </span>
+                                <span class="realtime-badge">Realtime</span>
+                            </div>
+                            <div class="sensor-list">
+                                <div class="sensor-row">
+                                    <div class="sensor-icon-wrap si-red">
+                                        <i class="bi bi-thermometer-half"></i>
+                                    </div>
+                                    <div class="sensor-info">
+                                        <div class="sensor-label">Nhiệt độ</div>
+                                        <div class="sensor-val" id="tempSensor">-- °C</div>
+                                    </div>
+                                    <div class="sensor-status" id="tempStatus">--</div>
+                                </div>
+                                <div class="sensor-row">
+                                    <div class="sensor-icon-wrap si-blue">
+                                        <i class="bi bi-droplet-half"></i>
+                                    </div>
+                                    <div class="sensor-info">
+                                        <div class="sensor-label">Độ ẩm</div>
+                                        <div class="sensor-val" id="humSensor">-- %</div>
+                                    </div>
+                                    <div class="sensor-status" id="humStatus">--</div>
+                                </div>
+                                <div class="sensor-row">
+                                    <div class="sensor-icon-wrap si-amber">
+                                        <i class="bi bi-brightness-high"></i>
+                                    </div>
+                                    <div class="sensor-info">
+                                        <div class="sensor-label">Ánh sáng</div>
+                                        <div class="sensor-val" id="lightLux">-- lux</div>
+                                    </div>
+                                    <div class="sensor-status" id="lightStatus">--</div>
+                                </div>
+                                <div class="sensor-row">
+                                    <div class="sensor-icon-wrap si-green">
+                                        <i class="bi bi-wind"></i>
+                                    </div>
+                                    <div class="sensor-info">
+                                        <div class="sensor-label">
+                                            Gas (MQ-2)
+                                            <i class="bi bi-exclamation-triangle-fill sensor-alert-icon level-warn" id="gasAlertIcon"></i>
+                                        </div>
+                                        <div class="sensor-val" id="gasValue">-- ADC</div>
+                                    </div>
+                                    <div class="sensor-status" id="gasStatus">--</div>
+                                </div>
+                                <div class="sensor-row">
+                                    <div class="sensor-icon-wrap si-purple">
+                                        <i class="bi bi-person-walking"></i>
+                                    </div>
+                                    <div class="sensor-info">
+                                        <div class="sensor-label">Chuyển động (PIR)</div>
+                                        <div class="sensor-val" id="pirStatus">--</div>
+                                    </div>
+                                    <div class="sensor-status" id="pirDot">--</div>
+                                </div>
+                                <div class="sensor-row">
+                                    <div class="sensor-icon-wrap si-red">
+                                        <i class="bi bi-fire"></i>
+                                    </div>
+                                    <div class="sensor-info">
+                                        <div class="sensor-label">
+                                            Cảm biến lửa
+                                            <i class="bi bi-fire sensor-alert-icon level-danger" id="flameAlertIcon"></i>
+                                        </div>
+                                        <div class="sensor-val" id="flameStatus">Bình thường</div>
+                                    </div>
+                                    <div class="sensor-status" id="flameDot">--</div>
+                                </div>
+                            </div>
+                            <!-- RGB LED Control -->
+                            <div class="rgb-card">
+                                <div class="rgb-card-head">
+                                    <div class="rgb-card-title">
+                                        <i class="bi bi-lightbulb-fill"></i>
+                                        RGB LED
+                                    </div>
+                                    <div class="rgb-current">
+                                        <span class="rgb-dot-live" id="rgbDot"></span>
+                                        <span class="rgb-status-text" id="rgbStatus">TẮT</span>
+                                    </div>
+                                </div>
+                                <div class="rgb-grid">
+                                    <button class="rgb-pill" data-color="RED"     onclick="publishRgb('RED')">
+                                        <span class="rgb-pill-dot" style="background:#ef4444;"></span>Đỏ
+                                    </button>
+                                    <button class="rgb-pill" data-color="GREEN"   onclick="publishRgb('GREEN')">
+                                        <span class="rgb-pill-dot" style="background:#22c55e;"></span>Xanh lá
+                                    </button>
+                                    <button class="rgb-pill" data-color="BLUE"    onclick="publishRgb('BLUE')">
+                                        <span class="rgb-pill-dot" style="background:#3b82f6;"></span>Xanh dương
+                                    </button>
+                                    <button class="rgb-pill" data-color="YELLOW"  onclick="publishRgb('YELLOW')">
+                                        <span class="rgb-pill-dot" style="background:#eab308;"></span>Vàng
+                                    </button>
+                                    <button class="rgb-pill" data-color="CYAN"    onclick="publishRgb('CYAN')">
+                                        <span class="rgb-pill-dot" style="background:#06b6d4;"></span>Cyan
+                                    </button>
+                                    <button class="rgb-pill" data-color="MAGENTA" onclick="publishRgb('MAGENTA')">
+                                        <span class="rgb-pill-dot" style="background:#a855f7;"></span>Tím
+                                    </button>
+                                    <button class="rgb-pill" data-color="WHITE"   onclick="publishRgb('WHITE')">
+                                        <span class="rgb-pill-dot" style="background:#e2e8f0;border:1px solid #cbd5e1;"></span>Trắng
+                                    </button>
+                                    <button class="rgb-pill rgb-pill-off"         onclick="publishRgb('OFF')">
+                                        <i class="bi bi-power" style="font-size:12px;"></i>Tắt
+                                    </button>
+                                </div>
+                                <div class="rgb-ir-log">
+                                    <i class="bi bi-broadcast"></i>
+                                    IR cuối: <span id="irLastCmd" style="font-family:monospace;">--</span>
+                                </div>
+                            </div>
+                            <!-- Gas bar -->
+                            <div class="gas-bar-section">
+                                <div class="gas-bar-label">
+                                    <span>Mức gas</span>
+                                    <span id="gasBarVal">0 / 1023</span>
+                                </div>
+                                <div class="gas-bar-track">
+                                    <div class="gas-bar-fill safe" id="gasBar" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: An ninh + Cảnh báo -->
+                    <div class="dash-col">
+
+                        <!-- Card MQTT status -->
+                        <div class="card dash-card-sm">
+                            <div class="dash-card-head">
+                                <span class="dash-card-title">
+                                    <i class="bi bi-wifi"></i>
+                                    Kết nối
+                                </span>
+                                <div class="mqtt-pill">
+                                    <span class="mqtt-dot" id="mqttDot"></span>
+                                    <span id="mqttStatus">Đang kết nối...</span>
+                                </div>
+                            </div>
+                            <div class="node-status-grid">
+                                <div class="node-item">
+                                    <span class="node-label">ESP32_1</span>
+                                    <span class="node-dot offline" id="status-esp32_1"></span>
+                                </div>
+                                <div class="node-item">
+                                    <span class="node-label">ESP32_2</span>
+                                    <span class="node-dot offline" id="status-esp32_2"></span>
+                                </div>
+                                <div class="node-item">
+                                    <span class="node-label">ESP8266</span>
+                                    <span class="node-dot offline" id="status-esp8266"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card cửa + RFID -->
+                        <div class="card dash-card-sm">
+                            <div class="dash-card-head">
+                                <span class="dash-card-title">
+                                    <i class="bi bi-shield-check"></i>
+                                    An ninh
+                                </span>
+                            </div>
+                            <div class="security-rows">
+                                <div class="security-row">
+                                    <div class="security-icon-wrap">
+                                        <i class="bi bi-door-closed"></i>
+                                    </div>
+                                    <div class="security-info">
+                                        <div class="security-label">Cửa ra vào</div>
+                                        <div class="security-val" id="doorStatus">--</div>
+                                    </div>
+                                </div>
+                                <div class="security-row">
+                                    <div class="security-icon-wrap si-purple">
+                                        <i class="bi bi-credit-card-2-front"></i>
+                                    </div>
+                                    <div class="security-info">
+                                        <div class="security-label">Thẻ cuối</div>
+                                        <div class="security-val" id="lastRfid" style="font-family:monospace;">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card cảnh báo gần nhất -->
+                        <div class="card dash-card-sm dash-card-alerts">
+                            <div class="dash-card-head">
+                                <span class="dash-card-title">
+                                    <i class="bi bi-bell"></i>
+                                    Cảnh báo
+                                </span>
+                                <span class="alert-count-badge" id="alertCount">0</span>
+                            </div>
+                            <div id="alert-list-mini"></div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== PAGE: DEVICES ===== -->
+        <div id="page-devices" class="page-content" style="display:none;">
+            <div class="content-area">
+                <h2 class="page-title">Devices</h2>
+                <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">
+                    Thiết bị có thể điều khiển — Phòng khách
+                </p>
+
+                <!-- Danh sách relay -->
+                <div class="device-grid" id="device-list-full"></div>
+
+                <!-- Card RGB LED -->
+                <div class="card dev-rgb-card">
+                    <div class="dev-rgb-head">
+                        <div class="dev-rgb-left">
+                            <div class="dev-rgb-icon-wrap" id="devRgbIconWrap">
+                                <i class="bi bi-lightbulb-fill"></i>
+                            </div>
+                            <div>
+                                <div class="dev-rgb-name">RGB LED</div>
+                                <div class="dev-rgb-sub">Phòng khách</div>
+                            </div>
+                        </div>
+                        <div class="dev-rgb-right">
+                            <div class="dev-rgb-status">
+                                <span class="dev-rgb-dot" id="devRgbDot"></span>
+                                <span class="dev-rgb-label" id="devRgbLabel">TẮT</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="devRgbToggle"
+                                    onchange="toggleRgbPower(this.checked)">
+                                <div class="toggle-track"></div>
+                                <div class="toggle-thumb"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Color picker — ẩn khi tắt -->
+                    <div class="dev-rgb-colors" id="devRgbColors">
+                        <div class="dev-rgb-colors-title">Chọn màu</div>
+                        <div class="dev-rgb-grid">
+                            <button class="dev-rgb-pill" data-color="RED"
+                                onclick="publishRgb('RED')">
+                                <span class="dev-rgb-swatch" style="background:#ef4444;"></span>
+                                <span>Đỏ</span>
+                            </button>
+                            <button class="dev-rgb-pill" data-color="GREEN"
+                                onclick="publishRgb('GREEN')">
+                                <span class="dev-rgb-swatch" style="background:#22c55e;"></span>
+                                <span>Xanh lá</span>
+                            </button>
+                            <button class="dev-rgb-pill" data-color="BLUE"
+                                onclick="publishRgb('BLUE')">
+                                <span class="dev-rgb-swatch" style="background:#3b82f6;"></span>
+                                <span>Xanh dương</span>
+                            </button>
+                            <button class="dev-rgb-pill" data-color="YELLOW"
+                                onclick="publishRgb('YELLOW')">
+                                <span class="dev-rgb-swatch" style="background:#eab308;"></span>
+                                <span>Vàng</span>
+                            </button>
+                            <button class="dev-rgb-pill" data-color="CYAN"
+                                onclick="publishRgb('CYAN')">
+                                <span class="dev-rgb-swatch" style="background:#06b6d4;"></span>
+                                <span>Cyan</span>
+                            </button>
+                            <button class="dev-rgb-pill" data-color="MAGENTA"
+                                onclick="publishRgb('MAGENTA')">
+                                <span class="dev-rgb-swatch" style="background:#a855f7;"></span>
+                                <span>Tím</span>
+                            </button>
+                            <button class="dev-rgb-pill" data-color="WHITE"
+                                onclick="publishRgb('WHITE')">
+                                <span class="dev-rgb-swatch" style="background:#e2e8f0;border:1px solid #cbd5e1;"></span>
+                                <span>Trắng</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== PAGE: USER ===== -->
+        <div id="page-user" class="page-content" style="display:none;">
+            <div class="content-area">
+
+                <!-- Profile + đổi mật khẩu -->
+                <div class="user-page-grid">
+
+                    <!-- CỘT TRÁI: Profile card -->
+                    <div>
+                        <div class="card user-profile-card">
+                            <div class="profile-avatar-wrap">
+                                <div class="profile-avatar">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div class="profile-online-dot"></div>
+                            </div>
+                            <div class="profile-name" id="profileName">--</div>
+                            <div class="profile-role-badge" id="profileRole">--</div>
+                            <div class="profile-meta">
+                                <div class="profile-meta-item">
+                                    <i class="bi bi-shield-check"></i>
+                                    <span id="profileRoleText">--</span>
+                                </div>
+                                <div class="profile-meta-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span id="profileLoginTime">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: Đổi mật khẩu + quản lý -->
+                    <div class="user-right-col">
+
+                        <!-- Đổi mật khẩu -->
+                        <div class="card user-section-card">
+                            <div class="user-section-head">
+                                <i class="bi bi-key"></i>
+                                <span>Đổi mật khẩu</span>
+                            </div>
+                            <div class="user-form">
+                                <div class="user-form-row">
+                                    <label>Mật khẩu hiện tại</label>
+                                    <input type="password" id="oldPassword"
+                                        placeholder="Nhập mật khẩu cũ">
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Mật khẩu mới</label>
+                                    <input type="password" id="newPassword"
+                                        placeholder="Nhập mật khẩu mới">
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Xác nhận mật khẩu mới</label>
+                                    <input type="password" id="confirmPassword"
+                                        placeholder="Nhập lại mật khẩu mới">
+                                </div>
+                                <div class="user-form-msg" id="pwMsg"></div>
+                                <button class="user-btn user-btn-primary"
+                                    onclick="changePassword()">
+                                    <i class="bi bi-check2"></i> Cập nhật mật khẩu
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Quản lý user — chỉ admin thấy -->
+                <div id="adminPanel" style="display:none;">
+
+                    <div class="card user-section-card" style="margin-top:16px;">
+                        <div class="user-section-head">
+                            <i class="bi bi-people"></i>
+                            <span>Quản lý tài khoản</span>
+                            <button class="user-btn user-btn-sm user-btn-primary"
+                                style="margin-left:auto;"
+                                onclick="toggleAddUserForm()">
+                                <i class="bi bi-plus"></i> Thêm user
+                            </button>
+                        </div>
+
+                        <div class="user-search-bar">
+
+                            <div class="user-search-input">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="userSearchInput"
+                                    placeholder="Tìm theo tên..."
+                                    oninput="filterUserTable()">
+                            </div>
+
+                            <div class="user-filter-btns">
+                                <button class="user-filter-btn active"
+                                    onclick="setUserFilter('all', this)">Tất cả</button>
+
+                                <button class="user-filter-btn"
+                                    onclick="setUserFilter('admin', this)">Admin</button>
+
+                                <button class="user-filter-btn"
+                                    onclick="setUserFilter('user', this)">User</button>
+                            </div>
+
+                        </div>
+
+                        <!-- Form thêm user (ẩn mặc định) -->
+                        <div id="addUserForm" class="add-user-form" style="display:none;">
+                            <div class="add-user-fields">
+                                <div class="user-form-row">
+                                    <label>Tên đăng nhập</label>
+                                    <input type="text" id="newUsername"
+                                        placeholder="username">
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Mật khẩu</label>
+                                    <input type="password" id="newUserPassword"
+                                        placeholder="password">
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Quyền</label>
+                                    <select id="newUserRole">
+                                        <option value="user">User</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="user-form-msg" id="addUserMsg"></div>
+                            <div style="display:flex;gap:8px;margin-top:10px;">
+                                <button class="user-btn user-btn-primary"
+                                    onclick="addUser()">
+                                    <i class="bi bi-person-plus"></i> Thêm
+                                </button>
+                                <button class="user-btn user-btn-ghost"
+                                    onclick="toggleAddUserForm()">
+                                    Hủy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bảng danh sách user -->
+                        <div class="user-table-wrap">
+                            <table class="user-table" id="userTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Tên đăng nhập</th>
+                                        <th>Quyền</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center;
+                                            color:var(--text-muted);padding:20px;">
+                                            Đang tải...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== PAGE: CAMERAS ===== -->
+        <div id="page-cameras" class="page-content" style="display:none;">
+            <div class="content-area">
+                <h2 class="page-title">Cameras</h2>
+                <div class="card" style="padding:16px; text-align:center;">
+                    <i class="bi bi-camera-video" style="font-size:48px; opacity:.3;"></i>
+                    <p style="color:var(--text-muted); margin-top:12px;">Camera stream sẽ hiển thị ở đây<br>
+                    <small>Thay <code>src</code> bằng: <code>http://[PI_IP]:8080/?action=stream</code></small></p>
+                    <img id="cameraStream" src="" class="img-fluid rounded mt-2" style="display:none;">
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: NOTIFICATIONS ===== -->
+        <div id="page-notifications" class="page-content" style="display:none;">
+            <div class="content-area">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                    <h2 class="page-title" style="margin-bottom:0;">Notifications</h2>
+                    <button class="user-btn user-btn-ghost" onclick="markAllRead()">
+                        <i class="bi bi-check2-all"></i> Đánh dấu đã đọc
+                    </button>
+                </div>
+                <div id="alert-list" class="d-flex flex-column gap-3"></div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: SETTINGS ===== -->
+        <div id="page-settings" class="page-content" style="display:none;">
+            <div class="content-area">
+
+                <!-- Tab bar -->
+                <div class="settings-tabs">
+                    <button class="settings-tab active"
+                        onclick="switchSettingsTab('thresholds', this)">
+                        <i class="bi bi-sliders"></i> Ngưỡng cảnh báo
+                    </button>
+                    <button class="settings-tab"
+                        onclick="switchSettingsTab('automation', this)">
+                        <i class="bi bi-robot"></i> Automation
+                    </button>
+                    <button class="settings-tab"
+                        onclick="switchSettingsTab('rfid', this)">
+                        <i class="bi bi-credit-card-2-front"></i> Thẻ RFID
+                    </button>
+                    <button class="settings-tab"
+                        onclick="switchSettingsTab('telegram', this)">
+                        <i class="bi bi-telegram"></i> Telegram
+                    </button>
+                    <button class="settings-tab"
+                        onclick="switchSettingsTab('mqtt-cfg', this)">
+                        <i class="bi bi-wifi"></i> MQTT
+                    </button>
+                    <button class="settings-tab"
+                        onclick="switchSettingsTab('schedule', this)">
+                        <i class="bi bi-calendar-week"></i> Lịch hẹn
+                    </button>
+                </div>
+
+                <!-- NGƯỠNG CẢNH BÁO -->
+                <div class="settings-panel active" id="stab-thresholds">
+                    <div class="card settings-block">
+                        <div class="settings-block-head">
+                            <i class="bi bi-sliders"></i>
+                            Ngưỡng cảnh báo
+                            <span class="settings-admin-badge">Chỉ Admin</span>
+                        </div>
+                        <div class="settings-form-grid">
+                            <div class="settings-field">
+                                <label>Gas nguy hiểm (ADC)</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-gas"
+                                        min="10" max="1023" placeholder="50">
+                                    <span class="settings-unit">ADC</span>
+                                </div>
+                                <div class="settings-hint">
+                                    Giá trị 10–1023 ADC. Trên ngưỡng → relay + còi kích hoạt
+                                </div>
+                            </div>
+                            <div class="settings-field">
+                                <label>Nhiệt độ bật quạt</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-temp-hot"
+                                        min="20" max="50" placeholder="35">
+                                    <span class="settings-unit">°C</span>
+                                </div>
+                                <div class="settings-hint">Bật relay2 (quạt)</div>
+                            </div>
+                            <div class="settings-field">
+                                <label>Nhiệt độ tắt quạt</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-temp-ok"
+                                        min="15" max="40" placeholder="32">
+                                    <span class="settings-unit">°C</span>
+                                </div>
+                                <div class="settings-hint">Tắt relay2 khi mát</div>
+                            </div>
+                            <div class="settings-field">
+                                <label>Nhiệt độ cảnh báo Telegram</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-temp-alert"
+                                        min="25" max="60" placeholder="38">
+                                    <span class="settings-unit">°C</span>
+                                </div>
+                                <div class="settings-hint">Gửi Telegram khi vượt</div>
+                            </div>
+                            <div class="settings-field">
+                                <label>Độ ẩm cảnh báo</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-hum"
+                                        min="50" max="100" placeholder="90">
+                                    <span class="settings-unit">%</span>
+                                </div>
+                                <div class="settings-hint">Độ ẩm quá cao</div>
+                            </div>
+                            <div class="settings-field">
+                                <label>PIR timeout (phút)</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-pir-timeout"
+                                        min="1" max="60" placeholder="10">
+                                    <span class="settings-unit">phút</span>
+                                </div>
+                                <div class="settings-hint">
+                                    Tắt đèn sau N phút không có người
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-actions">
+                            <div class="settings-msg" id="msg-thresholds"></div>
+                            <button class="user-btn user-btn-primary"
+                                id="btn-thresholds"
+                                onclick="saveThresholds()">
+                                <i class="bi bi-check2-circle"></i>
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AUTOMATION -->
+                <div class="settings-panel" id="stab-automation">
+                    <div class="card settings-block">
+                        <div class="settings-block-head">
+                            <i class="bi bi-robot"></i>
+                            Automation Rules
+                            <span class="settings-admin-badge">Chỉ Admin</span>
+                        </div>
+                        <div class="automation-list">
+                            <div class="automation-item">
+                                <div class="automation-info">
+                                    <div class="automation-title">
+                                        <i class="bi bi-lightbulb"></i>
+                                        PIR → Bật đèn
+                                    </div>
+                                    <div class="automation-desc">
+                                        Phát hiện chuyển động + tối → tự bật relay1
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-pir_light"
+                                        onchange="saveAutomation('pir_light',
+                                            this.checked)">
+                                    <div class="toggle-track"></div>
+                                    <div class="toggle-thumb"></div>
+                                </label>
+                            </div>
+                            <div class="automation-item">
+                                <div class="automation-info">
+                                    <div class="automation-title">
+                                        <i class="bi bi-thermometer-half"></i>
+                                        Nhiệt độ → Quạt
+                                    </div>
+                                    <div class="automation-desc">
+                                        Temp > ngưỡng → bật relay2, dưới ngưỡng → tắt
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-temp_fan"
+                                        onchange="saveAutomation('temp_fan',
+                                            this.checked)">
+                                    <div class="toggle-track"></div>
+                                    <div class="toggle-thumb"></div>
+                                </label>
+                            </div>
+                            <div class="automation-item">
+                                <div class="automation-info">
+                                    <div class="automation-title">
+                                        <i class="bi bi-wind"></i>
+                                        Gas → Tắt bếp + Còi
+                                    </div>
+                                    <div class="automation-desc">
+                                        Gas > ngưỡng → tắt relay bếp + bật buzzer
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-gas_safety"
+                                        onchange="saveAutomation('gas_safety',
+                                            this.checked)">
+                                    <div class="toggle-track"></div>
+                                    <div class="toggle-thumb"></div>
+                                </label>
+                            </div>
+                            <div class="automation-item">
+                                <div class="automation-info">
+                                    <div class="automation-title">
+                                        <i class="bi bi-fire"></i>
+                                        Lửa → Khẩn cấp
+                                    </div>
+                                    <div class="automation-desc">
+                                        Flame = 1 → tắt bếp + bật còi + Telegram
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-flame_safety"
+                                        onchange="saveAutomation('flame_safety',
+                                            this.checked)">
+                                    <div class="toggle-track"></div>
+                                    <div class="toggle-thumb"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-msg" id="msg-automation"></div>
+                        <div class="settings-actions" style="border-top:none;padding-top:0;">
+                            <span style="font-size:11px;color:var(--text-muted);">
+                                <i class="bi bi-info-circle"></i>
+                                Thay đổi được lưu và gửi đến thiết bị ngay lập tức
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- RFID -->
+                <div class="settings-panel" id="stab-rfid">
+                    <div class="card settings-block">
+                        <div class="settings-block-head">
+                            <i class="bi bi-credit-card-2-front"></i>
+                            Quản lý thẻ RFID
+                            <button class="user-btn user-btn-sm user-btn-primary"
+                                style="margin-left:auto"
+                                id="btn-add-rfid"
+                                onclick="toggleRfidForm()">
+                                <i class="bi bi-plus"></i> Thêm thẻ
+                            </button>
+                        </div>
+
+                        <!-- Form thêm thẻ -->
+                        <div id="rfidAddForm" class="add-user-form"
+                            style="display:none; margin-bottom:14px;">
+                            <div class="add-user-fields">
+                                <div class="user-form-row">
+                                    <label>UID thẻ</label>
+                                    <input type="text" id="rfid-uid"
+                                        placeholder="VD: A1B2C3D4"
+                                        style="text-transform:uppercase">
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Tên thẻ</label>
+                                    <input type="text" id="rfid-name"
+                                        placeholder="VD: Thẻ phòng ngủ">
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Chủ thẻ</label>
+                                    <input type="text" id="rfid-owner"
+                                        placeholder="VD: admin">
+                                </div>
+                            </div>
+                            <div class="settings-hint" style="margin:6px 0">
+                                💡 Quẹt thẻ vào đầu đọc, UID tự hiện trên trang
+                                Notifications
+                            </div>
+                            <div class="user-form-msg" id="msg-rfid-add"></div>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <button class="user-btn user-btn-primary"
+                                    onclick="addRfidCard()">
+                                    <i class="bi bi-plus"></i> Thêm
+                                </button>
+                                <button class="user-btn user-btn-ghost"
+                                    onclick="toggleRfidForm()">Hủy</button>
+                            </div>
+                        </div>
+
+                        <!-- Bảng thẻ -->
+                        <div class="user-table-wrap">
+                            <table class="user-table">
+                                <thead>
+                                    <tr>
+                                        <th>UID</th>
+                                        <th>Tên thẻ</th>
+                                        <th>Chủ thẻ</th>
+                                        <th>Ngày thêm</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rfidTableBody">
+                                    <tr><td colspan="5"
+                                        style="text-align:center;
+                                        color:var(--text-muted);padding:20px;">
+                                        Đang tải...
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TELEGRAM -->
+                <div class="settings-panel" id="stab-telegram">
+                    <div class="card settings-block">
+                        <div class="settings-block-head">
+                            <i class="bi bi-telegram"></i>
+                            Cấu hình Telegram Bot
+                            <span class="settings-admin-badge">Chỉ Admin</span>
+                        </div>
+                        <div class="settings-form-grid">
+                            <div class="settings-field" style="grid-column:1/-1">
+                                <label>Bot Token</label>
+                                <input type="text" id="cfg-tg-token"
+                                    placeholder="1234567890:AAFxxx...">
+                                <div class="settings-hint">
+                                    Lấy từ @BotFather trên Telegram
+                                </div>
+                            </div>
+                            <div class="settings-field">
+                                <label>Chat ID</label>
+                                <input type="text" id="cfg-tg-chatid"
+                                    placeholder="123456789">
+                                <div class="settings-hint">
+                                    Lấy từ @userinfobot
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-actions">
+                            <div class="settings-msg" id="msg-telegram"></div>
+                            <button class="user-btn user-btn-ghost"
+                                onclick="testTelegram()">
+                                <i class="bi bi-send"></i> Gửi tin test
+                            </button>
+                            <button class="user-btn user-btn-primary"
+                                onclick="saveTelegram()">
+                                <i class="bi bi-check2-circle"></i> Lưu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MQTT CONFIG -->
+                <div class="settings-panel" id="stab-mqtt-cfg">
+                    <div class="card settings-block">
+                        <div class="settings-block-head">
+                            <i class="bi bi-wifi"></i>
+                            Cấu hình MQTT Broker
+                            <span class="settings-admin-badge">Chỉ Admin</span>
+                        </div>
+                        <div class="settings-form-grid">
+                            <div class="settings-field">
+                                <label>Broker Host / IP</label>
+                                <input type="text" id="cfg-mqtt-host"
+                                    placeholder="192.168.100.193">
+                            </div>
+                            <div class="settings-field">
+                                <label>WebSocket Port</label>
+                                <div class="settings-input-wrap">
+                                    <input type="number" id="cfg-mqtt-port"
+                                        placeholder="9001">
+                                    <span class="settings-unit">port</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-actions">
+                            <div class="settings-msg" id="msg-mqtt-cfg"></div>
+                            <button class="user-btn user-btn-primary"
+                                onclick="saveMqttConfig()">
+                                <i class="bi bi-check2-circle"></i> Lưu & Reconnect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCHEDULE -->
+                <div class="settings-panel" id="stab-schedule">
+                    <div class="card settings-block">
+                        <div class="settings-block-head">
+                            <i class="bi bi-calendar-week"></i>
+                            Lịch hẹn tự động
+                            <button class="user-btn user-btn-sm user-btn-primary"
+                                style="margin-left:auto"
+                                onclick="toggleScheduleForm()">
+                                <i class="bi bi-plus"></i> Thêm lịch
+                            </button>
+                        </div>
+
+                        <!-- Form thêm lịch -->
+                        <div id="scheduleAddForm" class="add-user-form"
+                            style="display:none; margin-bottom:14px;">
+                            <div class="add-user-fields">
+                                <div class="user-form-row">
+                                    <label>Thiết bị</label>
+                                    <select id="sch-device">
+                                        <option value="relay1">Đèn phòng khách</option>
+                                        <option value="relay2">Quạt</option>
+                                        <option value="relay_k" disabled>Relay báo động (tự động)</option>
+                                    </select>
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Hành động</label>
+                                    <select id="sch-action">
+                                        <option value="ON">Bật</option>
+                                        <option value="OFF">Tắt</option>
+                                    </select>
+                                </div>
+                                <div class="user-form-row">
+                                    <label>Giờ thực hiện</label>
+                                    <input type="time" id="sch-time">
+                                </div>
+                            </div>
+                            <div class="day-picker" id="dayPicker">
+                                <span class="day-chip active" data-day="1">T2</span>
+                                <span class="day-chip active" data-day="2">T3</span>
+                                <span class="day-chip active" data-day="3">T4</span>
+                                <span class="day-chip active" data-day="4">T5</span>
+                                <span class="day-chip active" data-day="5">T6</span>
+                                <span class="day-chip active" data-day="6">T7</span>
+                                <span class="day-chip active" data-day="0">CN</span>
+                            </div>
+                            <div class="user-form-msg" id="msg-schedule-add"></div>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <button class="user-btn user-btn-primary"
+                                    onclick="addSchedule()">
+                                    <i class="bi bi-plus"></i> Thêm
+                                </button>
+                                <button class="user-btn user-btn-ghost"
+                                    onclick="toggleScheduleForm()">Hủy</button>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách lịch -->
+                        <div id="scheduleList">
+                            <div style="color:var(--text-muted);font-size:13px;
+                                padding:20px 0;text-align:center;">
+                                Đang tải...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== PAGE: HISTORY ===== -->
+        <div id="page-history" class="page-content" style="display:none;">
+            <div class="content-area">
+
+                <div class="history-header">
+                    <h2 class="page-title" style="margin-bottom:0;">Lịch sử dữ liệu</h2>
+                    <div class="history-filters">
+                        <button class="filter-btn active" onclick="loadHistory(7, this)">7 ngày</button>
+                        <button class="filter-btn" onclick="loadHistory(30, this)">30 ngày</button>
+                    </div>
+                </div>
+
+                <!-- SUMMARY CARDS -->
+                <div class="hist-stat-grid">
+                    <div class="hist-stat-card">
+                        <div class="hist-stat-label">Nhiệt độ TB</div>
+                        <div class="hist-stat-val" id="hist-avg-temp">--</div>
+                        <div class="hist-stat-sub" id="hist-range-temp">--</div>
+                    </div>
+                    <div class="hist-stat-card">
+                        <div class="hist-stat-label">Độ ẩm TB</div>
+                        <div class="hist-stat-val" id="hist-avg-hum">--</div>
+                        <div class="hist-stat-sub" id="hist-range-hum">--</div>
+                    </div>
+                    <div class="hist-stat-card">
+                        <div class="hist-stat-label">Gas TB</div>
+                        <div class="hist-stat-val" id="hist-avg-gas">--</div>
+                        <div class="hist-stat-sub" id="hist-range-gas">--</div>
+                    </div>
+                    <div class="hist-stat-card">
+                        <div class="hist-stat-label">Số bản ghi</div>
+                        <div class="hist-stat-val" id="hist-count">--</div>
+                        <div class="hist-stat-sub" id="hist-days-label">ngày</div>
+                    </div>
+                </div>
+
+                <!-- CHART -->
+                <div class="card hist-chart-card">
+                    <div class="card-header-row">
+                        <span class="card-title">Biểu đồ trung bình theo ngày</span>
+                        <div class="chart-legend-toggle">
+                            <button class="legend-btn active" onclick="toggleHistLine('temp', this)">Nhiệt độ</button>
+                            <button class="legend-btn active" onclick="toggleHistLine('hum', this)">Độ ẩm</button>
+                            <button class="legend-btn active" onclick="toggleHistLine('gas', this)">Gas</button>
+                        </div>
+                    </div>
+                    <div class="hist-chart-wrap">
+                        <canvas id="histChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- TABLE -->
+                <div class="card hist-table-card">
+                    <div class="card-header-row">
+                        <span class="card-title">Chi tiết theo ngày</span>
+                        <button class="icon-btn-sm" onclick="exportCSV()" title="Xuất CSV">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                    <div class="hist-table-wrap">
+                        <table class="hist-table" id="histTable">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Nhiệt độ TB (°C)</th>
+                                    <th>Độ ẩm TB (%)</th>
+                                    <th>Gas TB</th>
+                                    <th>Đánh giá</th>
+                                </tr>
+                            </thead>
+                            <tbody id="histTableBody">
+                                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="dashboard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
