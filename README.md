@@ -302,27 +302,77 @@ Các chân GPIO
 
 ## Hình ảnh minh họa
 
-> Các ảnh dưới đây cần được đặt đúng tên trong thư mục `assets/`.
+### Giao diện đăng nhập
 
-### Sơ đồ kiến trúc hệ thống
+![Giao diện đăng nhập](assets/images/ch3-dashboard-login.jpg)
 
-![System Architecture](assets/diagrams/system-architecture.png)
+### Giao diện tổng quan Dashboard
+
+![Dashboard Overview](assets/images/ch3-dashboard-overview.jpg)
+
+### Giao diện điều khiển thiết bị
+
+![Điều khiển thiết bị](assets/images/ch3-dashboard-device-control.jpg)
+
+### Giao diện lịch sử dữ liệu
+
+![Lịch sử dữ liệu](assets/images/ch3-dashboard-history.jpg)
+
+### Dữ liệu cảm biến thời gian thực
+
+![Cảm biến thời gian thực](assets/images/ch3-dashboard-realtime-sensors.jpg)
+
+### Cấu hình ngưỡng cảnh báo
+
+![Cấu hình ngưỡng cảnh báo](assets/images/ch3-dashboard-settings-threshold.jpg)
+
+### Sơ đồ kiến trúc tổng thể hệ thống
+
+![Sơ đồ kiến trúc tổng thể hệ thống](assets/diagrams/ch2-diagram-overall-system.drawio.png)
+
+### Sơ đồ khối phần cứng
+
+![Sơ đồ khối phần cứng](assets/diagrams/ch2-diagram-hardware-block-system.png)
 
 ### Sơ đồ MQTT Topic
 
-![MQTT Topic Tree](assets/diagrams/mqtt-topic-tree.png)
+![Sơ đồ MQTT Topic](assets/diagrams/ch2-diagram-mqtt-topic-tree.drawio.png)
 
-### Giao diện Web Dashboard
+### Lưu đồ Node.js Server
 
-![Dashboard Overview](assets/images/dashboard-overview.png)
+![Lưu đồ Node.js Server](assets/diagrams/ch2-flowchart-nodejs-server.drawio.png)
 
-### Mô hình phần cứng
+### Lưu đồ node phòng khách
 
-![Hardware Overview](assets/images/hardware-overall.jpg)
+![Lưu đồ node phòng khách](assets/diagrams/ch2-flowchart-livingroom-node.drawio.png)
+
+### Lưu đồ node bếp
+
+![Lưu đồ node bếp](assets/diagrams/ch2-flowchart-kitchen-node.drawio.png)
+
+### Lưu đồ node cửa
+
+![Lưu đồ node cửa](assets/diagrams/ch2-flowchart-door-node.drawio.png)
+
+### Mô hình phần cứng tổng thể
+
+![Mô hình phần cứng tổng thể](assets/images/ch3-hardware-overall-system.jpg)
+
+### Node phòng khách
+
+![Node phòng khách](assets/images/ch3-hardware-livingroom-node.jpg)
+
+### Node bếp
+
+![Node bếp](assets/images/ch3-hardware-kitchen-node.jpg)
+
+### Node cửa
+
+![Node cửa](assets/images/ch3-hardware-door-node.jpg)
 
 ### Cảnh báo Telegram
 
-![Telegram Alert](assets/images/telegram-alert.png)
+![Cảnh báo Telegram](assets/images/ch3-telegram-alerts-summary.jpg)
 
 ---
 
