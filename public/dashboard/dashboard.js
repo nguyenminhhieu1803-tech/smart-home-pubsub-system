@@ -5,7 +5,7 @@
 
 // ===== CONFIG =====
 const MQTT_CONFIG = {
-    host:     "192.168.68.193",
+    host:     "192.168.0.101",
     port:     9001,
     username: "",
     password: "",

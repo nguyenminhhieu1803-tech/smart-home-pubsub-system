@@ -33,6 +33,11 @@ app.get("/sw.js", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/sw.js"));
 });
 
+// ===== Trang mặc định =====
+app.get("/", (req, res) => {
+  res.redirect("/login/login.html");
+});
+
 // static frontend
 app.use(express.static(path.join(__dirname, "../public")));
 
